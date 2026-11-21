@@ -18,7 +18,8 @@
       </a>
       <nav class="tabs" aria-label="主导航">
         <button class="tab active" data-view="arena" aria-current="page">对战观战</button>
-        <button class="tab" data-view="series">算法测评</button>
+        <button class="tab" data-view="series">内置策略</button>
+        <button class="tab" data-view="challenge">AI 挑战</button>
       </nav>
       <button class="rules-button" id="open-rules"><span aria-hidden="true">ⓘ</span> 游戏规则</button>
     </div>
@@ -120,6 +121,56 @@
           <div id="series-output" class="series-output"><p class="empty">选择两套策略后运行测评。</p></div>
         </section>
       </div>
+    </section>
+    <section id="challenge" class="view" hidden>
+      <div class="page-heading">
+        <div><h1>AI 算法挑战</h1><p>把同一份题面发给两个模型，粘贴它们交回的 JavaScript，再在固定赛制下对弈。</p></div>
+      </div>
+
+      <section class="panel challenge-brief" aria-labelledby="brief-title">
+        <div class="section-header"><h2 id="brief-title">统一参赛提示词</h2><button type="button" id="copy-prompt" class="button primary">复制提示词</button></div>
+        <div class="brief-body">
+          <div class="suite-tags" id="suite-tags"></div>
+          <p class="challenge-operator-note">比较模型时，保持对话上下文、工具权限和重试次数一致。校验结果会单独显示。</p>
+          <details><summary>查看完整提示词与代码接口</summary><textarea id="challenge-prompt" class="code-input prompt-input" readonly spellcheck="false" aria-label="统一参赛提示词"></textarea></details>
+          <span id="copy-status" role="status"></span>
+        </div>
+      </section>
+
+      <form id="challenge-form" class="challenge-form">
+        <div class="challenge-slots">
+          <section class="panel entry" aria-labelledby="entry-a-title">
+            <div class="section-header"><h2 id="entry-a-title"><b>A</b> 参赛算法</h2><button type="button" class="text-button" id="sample-a">填入示例</button></div>
+            <div class="entry-fields">
+              <label>模型或算法名称<input type="text" id="name-a" placeholder="策略 A" aria-label="策略 A 名称" maxlength="48" autocomplete="off"></label>
+              <label>参赛代码<textarea id="code-a" class="code-input" placeholder="function decide(state, team) { … }" aria-label="策略 A 代码" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></label>
+              <p id="check-a" class="entry-status" role="status">等待代码</p>
+            </div>
+          </section>
+          <section class="panel entry entry-b" aria-labelledby="entry-b-title">
+            <div class="section-header"><h2 id="entry-b-title"><b>B</b> 参赛算法</h2><button type="button" class="text-button" id="sample-b">填入示例</button></div>
+            <div class="entry-fields">
+              <label>模型或算法名称<input type="text" id="name-b" placeholder="策略 B" aria-label="策略 B 名称" maxlength="48" autocomplete="off"></label>
+              <label>参赛代码<textarea id="code-b" class="code-input" placeholder="function decide(state, team) { … }" aria-label="策略 B 代码" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></label>
+              <p id="check-b" class="entry-status" role="status">等待代码</p>
+            </div>
+          </section>
+        </div>
+        <div class="challenge-actions">
+          <span id="challenge-feedback" role="status">每局独立运行，双方每回合读取同一份战局。</span>
+          <button class="button" type="button" id="cancel-challenge" hidden>停止</button>
+          <button class="button" type="submit" id="validate-challenge">校验代码</button>
+          <button class="button primary" type="submit" id="run-challenge">开始正式测评</button>
+        </div>
+      </form>
+
+      <section class="panel challenge-results" aria-labelledby="challenge-results-title">
+        <div class="section-header">
+          <h2 id="challenge-results-title">正式测评结果</h2>
+          <button id="export-challenge" type="button" class="button" hidden>导出报告</button>
+        </div>
+        <div id="challenge-output"><p class="empty">校验两套策略后，运行固定赛制的换边对局。</p></div>
+      </section>
     </section>
   </main>
 

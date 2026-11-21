@@ -1,6 +1,8 @@
 import { WIDTH, HEIGHT, MAPS, TEAMS, createMatch, advance, simulate, getStats, score } from './engine.js';
 import { STRATEGIES, PARAMETERS } from './strategies.js';
 import { Atlas } from './atlas.js';
+import { initChallenge } from './challenge-ui.js';
+import { element } from './dom.js';
 
 const $ = id => document.getElementById(id);
 const atlas = new Atlas($('atlas'));
@@ -23,13 +25,6 @@ let lastTick = 0;
 let animation = 0;
 let view = 'arena';
 let markers = [];
-
-function element(tag, className, label) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (label != null) node.textContent = label;
-  return node;
-}
 
 function options(select, entries) {
   for (const [id,value] of Object.entries(entries)) select.append(new Option(value.name,id));
@@ -211,8 +206,8 @@ function setMatch(frames) {
   $('map-index').textContent = map.mark;
   $('active-seed').textContent = state.seed;
   $('active-seed').title = state.seed;
-  $('blue-name').textContent = getName(state.blue);
-  $('red-name').textContent = getName(state.red);
+  $('blue-name').textContent = state.blueLabel ?? getName(state.blue);
+  $('red-name').textContent = state.redLabel ?? getName(state.red);
   renderMarkers(state);
   render();
 }
@@ -287,6 +282,8 @@ $('open-rules').addEventListener('click', () => $('rules').showModal());
 
 function showView(name) {
   view = name;
+  const fragment = name === 'arena' ? '' : '#' + name;
+  if (window.location.hash !== fragment) window.history.replaceState(null,'',fragment || window.location.pathname + window.location.search);
   for (const tab of document.querySelectorAll('.tab')) {
     const active = tab.dataset.view === name;
     tab.classList.toggle('active',active);
@@ -294,7 +291,7 @@ function showView(name) {
     else tab.removeAttribute('aria-current');
     $(tab.dataset.view).hidden = !active;
   }
-  if (view === 'series' && playing) {
+  if (view !== 'arena' && playing) {
     stop();
     render();
   }
@@ -306,6 +303,10 @@ document.querySelector('.tabs').addEventListener('click', event => {
 function watchGame(config) {
   const frames = [createMatch(config)];
   while (frames.at(-1).winner === null) frames.push(advance(frames.at(-1)));
+  openReplay(frames);
+}
+
+function openReplay(frames) {
   showView('arena');
   setMatch(frames);
   window.scrollTo(0,0);
@@ -397,3 +398,6 @@ $('series-form').addEventListener('submit', async event => {
 });
 
 setMatch([createMatch(configFromForm())]);
+initChallenge(openReplay);
+if (window.location.hash === '#challenge') showView('challenge');
+if (window.location.hash === '#series') showView('series');

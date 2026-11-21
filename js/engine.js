@@ -148,14 +148,22 @@ function checkWinner(state) {
   }
 }
 
+export function validateOrder(state, order, team) {
+  if (order == null) return '';
+  const { from, to, units } = order;
+  if (![from, to, units].every(Number.isSafeInteger)) return 'from、to 与 units 必须为整数';
+  const origin = state.nodes[from];
+  if (!origin || origin.owner !== team) return '起点必须是本方据点';
+  if (!state.neighbors[from].some(edge => edge.id === to)) return '起点和终点必须由通路直接相连';
+  if (units < 1 || units >= origin.units) return '出兵至少 1，起点须保留至少 1 个单位';
+  return '';
+}
+
 function sendFleet(state, order, team) {
-  if (!order) return;
+  if (!order || validateOrder(state, order, team)) return;
   const { from, to, units } = order;
   const origin = state.nodes[from];
-  const route = state.neighbors[from]?.find(edge => edge.id === to);
-  if (origin?.owner !== team || !route || !Number.isInteger(units) || units < 1 || units >= origin.units) {
-    return;
-  }
+  const route = state.neighbors[from].find(edge => edge.id === to);
   origin.units -= units;
   state.fleets.push({
     id: state.nextFleet++, team, from, to, units, launch: state.turn, arrival: state.turn + route.time
@@ -192,7 +200,7 @@ function resolveArrivals(state) {
   }
 }
 
-export function advance(previous, bots = {}) {
+export function prepareTurn(previous) {
   if (previous.winner !== null) return previous;
   const state = {
     ...previous, turn: previous.turn + 1, events: [],
@@ -203,18 +211,30 @@ export function advance(previous, bots = {}) {
   }
   resolveArrivals(state);
   checkWinner(state);
+  return state;
+}
+
+export function decisionView({ turn, seed, mapId, nodes, neighbors, bases, fleets }) {
+  return { turn, turnLimit: TURN_LIMIT, seed, mapId, nodes, neighbors, bases, fleets };
+}
+
+export function submitOrders(state, orders) {
   if (state.winner !== null) return state;
-  const { turn, seed, nodes, neighbors, bases, fleets } = state;
-  // Both bots see the same turn, with isolated input objects.
-  const view = { turn, seed, nodes, neighbors, bases, fleets };
+  sendFleet(state, orders[0], 1);
+  sendFleet(state, orders[1], 2);
+  return state;
+}
+
+export function advance(previous, bots = {}) {
+  const state = prepareTurn(previous);
+  if (state.winner !== null) return state;
+  const view = decisionView(state);
   const orders = [state.blue, state.red].map((id, index) => {
     const strategy = id === 'custom' ? state.custom ?? STRATEGIES.custom : STRATEGIES[id];
     if (typeof bots[id] === 'function') return bots[id](structuredClone(view), index + 1);
     return chooseMove(view, index + 1, strategy ?? STRATEGIES.expand);
   });
-  sendFleet(state, orders[0], 1);
-  sendFleet(state, orders[1], 2);
-  return state;
+  return submitOrders(state, orders);
 }
 
 export function simulate(config, bots) {
