@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c121a">
+  <meta name="description" content="两套 AI 角逐城邦。选策略、看实时战局，并用换边赛比较胜率。">
+  <title>城域竞技场 · Siege Grid</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell top-inner">
+      <a class="brand" href="./" aria-label="城域竞技场首页">
+        <span class="brand-mark" aria-hidden="true">◇</span>
+        <span>城域竞技场<small>SIEGE GRID</small></span>
+      </a>
+      <nav class="tabs" aria-label="主导航">
+        <button class="tab active" data-view="arena" aria-current="page">对战观战</button>
+        <button class="tab" data-view="series">算法测评</button>
+      </nav>
+      <button class="rules-button" id="open-rules"><span aria-hidden="true">ⓘ</span> 游戏规则</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="arena" class="view">
+      <div class="page-heading">
+        <div>
+          <h1>城域对战</h1>
+          <p>两套算法争夺同一张地图。守住要塞，控制据点。</p>
+        </div>
+        <div class="match-id"><span>地图种子</span><strong id="active-seed">2407</strong></div>
+      </div>
+
+      <div class="workspace">
+        <div class="main-column">
+          <section class="panel battlefield" aria-label="实时战场">
+            <div class="battle-header">
+              <div><h2 id="battle-name">断脊盆地</h2><p id="battle-subtitle">中央枢纽 · 双翼通路</p></div>
+              <div class="battle-status"><span class="status" id="match-status" aria-live="polite">待开局</span><span class="turn"><b id="turn">000</b><span> / 140</span></span></div>
+            </div>
+            <div class="map" id="map">
+              <canvas id="atlas" width="1000" height="568" aria-hidden="true"></canvas>
+              <div id="nodes" class="nodes" aria-label="地图据点"></div>
+              <div class="map-compass" aria-hidden="true"><span>N</span><i></i></div>
+              <div class="map-index" aria-hidden="true">GRID <span id="map-index">01</span></div>
+            </div>
+            <div class="map-footer">
+              <div class="legend"><span><i class="blue-dot"></i>蓝方</span><span><i class="red-dot"></i>红方</span><span><i></i>中立</span><span class="route-key"><i></i>通路</span></div>
+              <span id="site-detail" aria-live="polite">点击据点查看驻军</span>
+            </div>
+            <div class="playback">
+              <button id="play" class="button primary play" type="button"><span class="button-icon" aria-hidden="true">▶</span><span>开始对战</span></button>
+              <button id="step" class="button icon-button" type="button" title="单步前进" aria-label="单步前进">▸▏</button>
+              <label class="timeline"><span class="sr-only">对局时间轴</span><input id="timeline" type="range" min="0" max="0" value="0" disabled></label>
+              <label class="speed"><span class="sr-only">播放速度</span><select id="speed"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
+            </div>
+          </section>
+
+          <section class="panel events" aria-labelledby="events-title">
+            <div class="section-header"><h2 id="events-title">战报</h2><span id="event-meta">等待对战开始</span></div>
+            <ol id="events-list" class="events-list"><li class="empty">据点易主和出兵记录会显示在这里。</li></ol>
+          </section>
+        </div>
+
+        <aside class="side-column">
+          <section class="panel standings" aria-labelledby="standings-title">
+            <div class="section-header"><h2 id="standings-title">战局对比</h2><span>实时</span></div>
+            <div class="versus">
+              <div class="team blue"><span><i></i> 蓝方</span><strong id="blue-name">开疆</strong></div>
+              <span class="vs">VS</span>
+              <div class="team red"><span><i></i> 红方</span><strong id="red-name">破阵</strong></div>
+            </div>
+            <div id="meters" class="meters"></div>
+            <div id="match-result" class="match-result" hidden></div>
+          </section>
+
+          <section class="panel config" aria-labelledby="config-title">
+            <div class="section-header"><h2 id="config-title">对战配置</h2><button id="swap" class="text-button" type="button" title="交换双方算法">⇄ 换边</button></div>
+            <form id="config">
+              <div class="config-pair">
+                <label><span class="label-blue">蓝方算法</span><select id="blue"></select></label>
+                <label><span class="label-red">红方算法</span><select id="red"></select></label>
+              </div>
+              <div class="strategy-notes"><p id="blue-desc"></p><p id="red-desc"></p></div>
+              <details class="custom" id="custom-editor" hidden>
+                <summary>调整自定义权重</summary>
+                <div id="weights"></div>
+              </details>
+              <label>战场地图<select id="map-select"></select></label>
+              <label for="seed">地图种子</label>
+              <div class="seed-row"><input id="seed" type="text" value="2407" maxlength="24" required autocomplete="off"><button id="roll" type="button" class="button icon-button" title="随机种子" aria-label="随机种子">⟳</button></div>
+              <button class="button new-match" id="new-match" type="submit">应用并开局</button>
+            </form>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section id="series" class="view" hidden>
+      <div class="page-heading"><div><h1>算法测评</h1><p>同一张图、同一个种子打两局，交换双方起点。</p></div></div>
+      <div class="series-layout">
+        <section class="panel series-options">
+          <div class="section-header"><h2>测评配置</h2></div>
+          <form id="series-form">
+            <div class="config-pair">
+              <label>策略 A<select id="series-a"></select></label>
+              <label>策略 B<select id="series-b"></select></label>
+            </div>
+            <label>地图范围<select id="series-map"><option value="all">全部地图</option></select></label>
+            <label>种子组数<select id="series-count"><option value="3">3 组</option><option value="6" selected>6 组</option><option value="12">12 组</option></select></label>
+            <button class="button primary" id="run-series">运行测评</button>
+            <p class="form-note" id="series-note">每组种子在所选地图上各打一轮换边赛。</p>
+          </form>
+        </section>
+        <section class="panel series-results">
+          <div class="section-header"><h2>测评结果</h2><span id="series-progress" aria-live="polite">等待运行</span></div>
+          <div id="series-output" class="series-output"><p class="empty">选择两套策略后运行测评。</p></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="rules">
+    <div class="dialog-header"><h2>游戏规则</h2><form method="dialog"><button class="button icon-button" aria-label="关闭规则">×</button></form></div>
+    <ul>
+      <li>双方各从一座要塞出发。占领的据点每回合按类型产出兵力，最多储存 360。</li>
+      <li>两套算法读取同一个战局，同时各下一道命令。部队沿相邻通路出发，距离越远，到达越晚。</li>
+      <li>同回合到达同一据点的部队与驻军一并结算。最大的一方只有超过其余兵力之和才能获胜，差值为剩余兵力。若无一方占优，据点保留原归属，驻军归零。</li>
+      <li>占领对手要塞即获胜。双方同回合占领对手要塞则平局。第 140 回合仍未分胜负时，积分等于据点数 × 30 + 每回合产能 × 8 + 总兵力（含在途部队）。</li>
+    </ul>
+  </dialog>
+</body>
+</html>
