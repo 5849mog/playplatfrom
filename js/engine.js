@@ -2,7 +2,6 @@ import { STRATEGIES, chooseMove } from './strategies.js';
 
 export const WIDTH = 1000;
 export const HEIGHT = 568;
-export const TURN_LIMIT = 140;
 export const TEAMS = { 1: '蓝方', 2: '红方' };
 export const MAPS = {
   basin: {
@@ -128,23 +127,12 @@ export function getStats(state) {
   return sides;
 }
 
-export function score(state) {
-  const stats = getStats(state);
-  return [null, ...stats.slice(1).map(side => (
-    side.land * 30 + side.income * 8 + side.units
-  ))];
-}
-
 function checkWinner(state) {
   const lostBlue = state.nodes[state.bases[1]].owner === 2;
   const lostRed = state.nodes[state.bases[2]].owner === 1;
   if (lostBlue || lostRed) {
     state.winner = lostBlue && lostRed ? 0 : lostBlue ? 2 : 1;
     state.endReason = state.winner ? '占领敌方要塞' : '双方同时占领对方要塞';
-  } else if (state.turn >= TURN_LIMIT) {
-    const [,blue,red] = score(state);
-    state.winner = blue === red ? 0 : blue > red ? 1 : 2;
-    state.endReason = '达到回合上限 · 按积分结算';
   }
 }
 
@@ -215,7 +203,7 @@ export function prepareTurn(previous) {
 }
 
 export function decisionView({ turn, seed, mapId, nodes, neighbors, bases, fleets }) {
-  return { turn, turnLimit: TURN_LIMIT, seed, mapId, nodes, neighbors, bases, fleets };
+  return { turn, seed, mapId, nodes, neighbors, bases, fleets };
 }
 
 export function submitOrders(state, orders) {
@@ -235,10 +223,4 @@ export function advance(previous, bots = {}) {
     return chooseMove(view, index + 1, strategy ?? STRATEGIES.expand);
   });
   return submitOrders(state, orders);
-}
-
-export function simulate(config, bots) {
-  let state = createMatch(config);
-  while (state.winner === null) state = advance(state, bots);
-  return state;
 }

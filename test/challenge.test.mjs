@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { CHALLENGE_PROMPT, PROTOCOL, SOURCE_LIMIT, TRIALS, normalizeSource } from '../js/challenge.js';
-import { advance, createMatch, decisionView, prepareTurn, simulate, submitOrders, validateOrder } from '../js/engine.js';
+import { CHALLENGE_PROMPT, DEFENSIVE_SAMPLE, PROTOCOL, SAMPLE, SOURCE_LIMIT, TRIALS, normalizeSource } from '../js/challenge.js';
+import { createRecording } from '../js/recording.js';
+import { advance, createMatch, decisionView, prepareTurn, submitOrders, validateOrder } from '../js/engine.js';
 
 test('standard trials use the same map and seed in each pair, with colors exchanged', () => {
   assert.equal(TRIALS.length,18);
@@ -54,12 +55,42 @@ test('judge rejects orders sending the entire garrison or using an illegal route
   assert.equal(validateOrder(state,{ from:0,to:1,units:1 },1),'');
 });
 
-test('built-in match results preserve the color swap on the standard suite', () => {
+test('a waiting match stays active after the former turn limit', () => {
+  const bots = { wait:()=>null };
+  let state = createMatch({ blue:'wait',red:'wait' });
+  for (let index = 0; index < 512; index++) state = advance(state,bots);
+  assert.equal(state.turn,512);
+  assert.equal(state.winner,null);
+  assert.equal(state.nodes[state.bases[1]].units,360);
+  assert.equal(state.nodes[state.bases[2]].units,360);
+  assert(!Object.hasOwn(decisionView(state),'turnLimit'));
+});
+
+test('replay matches recorded moves while seeking across checkpoints and back', () => {
+  let state = createMatch();
+  const recording = createRecording(state);
+  const originals = [state];
+  for (let turn = 1; turn <= 300; turn++) {
+    state = prepareTurn(state);
+    const from = state.bases[1];
+    const orders = [{ from, to:state.neighbors[from][0].id, units:1 },null];
+    submitOrders(state,orders);
+    recording.append(state,orders);
+    originals.push(state);
+  }
+  assert.equal(recording.lastTurn,300);
+  for (const turn of [0,1,127,128,129,256,300,250,70,0]) {
+    assert.deepEqual(recording.at(turn),originals[turn]);
+  }
+});
+
+test('demonstration bots complete the suite by taking a base on either side', () => {
+  const bots = Object.fromEntries([['a',SAMPLE],['b',DEFENSIVE_SAMPLE]]
+    .map(([id,source]) => [id,Function(source + '\nreturn decide;')()]));
   for (const { mapId,seed,swapped } of TRIALS) {
-    if (swapped) continue;
-    const result = simulate({ mapId,seed,blue:'expand',red:'raid' });
-    const mirrored = simulate({ mapId,seed,blue:'raid',red:'expand' });
-    assert.equal(mirrored.winner,result.winner ? 3 - result.winner : 0);
-    assert.equal(mirrored.turn,result.turn);
+    let state = createMatch({ mapId,seed,blue:swapped ? 'b' : 'a',red:swapped ? 'a' : 'b' });
+    for (let i = 0; i < 100 && state.winner === null; i++) state = advance(state,bots);
+    assert.equal(state.winner,swapped ? 2 : 1);
+    assert.equal(state.endReason,'占领敌方要塞');
   }
 });
