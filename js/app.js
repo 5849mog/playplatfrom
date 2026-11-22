@@ -1,4 +1,4 @@
-import { initChallenge } from './challenge-ui.js';
+import { initChallenge } from './challenge-ui.js?v=20261122';
 import { initReplay } from './replay-ui.js';
 
 const replay = initReplay();

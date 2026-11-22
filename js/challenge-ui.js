@@ -4,7 +4,7 @@ import { MAPS, getStats } from './engine.js';
 import {
   BUDGET_MS, CHALLENGE_PROMPT, DEFENSIVE_SAMPLE, PROTOCOL, RULESET, SAMPLE, SUITE, TRIALS,
   challengeMatch, checkSubmission, fingerprint, normalizeSource
-} from './challenge.js';
+} from './challenge.js?v=20261122';
 
 const $ = id => document.getElementById(id);
 const SLOT_IDS = ['a','b'];
