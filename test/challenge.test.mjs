@@ -20,7 +20,10 @@ test('paste accepts JavaScript source and a single code fence and checks source 
   const source = 'function decide(state, team) { return null; }';
   const fence = String.fromCharCode(96).repeat(3);
   assert.equal(normalizeSource(' ' + source + '\n'),source);
-  assert.equal(normalizeSource(fence + 'javascript\r\n' + source + '\r\n' + fence),source);
+  const fenced = fence + 'javascript\r\n' + source + '\r\n' + fence;
+  assert.equal(normalizeSource(fenced),source);
+  assert.equal(normalizeSource('以下是完整代码：\n' + fenced + '\n使用以上函数。'),source);
+  assert.throws(() => normalizeSource(fenced + '\n' + fenced),/只保留一个/);
   assert.throws(() => normalizeSource(fence + 'python\n' + source + '\n' + fence));
   assert.throws(() => normalizeSource('x'.repeat(SOURCE_LIMIT + 1)));
 });

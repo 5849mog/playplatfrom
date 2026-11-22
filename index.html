@@ -22,72 +22,82 @@
 
   <main class="shell">
     <section id="challenge" class="view">
-      <div class="page-heading">
-        <div><h1>AI 对战</h1><p>提交两套算法，选择单局对战或固定换边测评。</p></div>
+      <div class="page-heading workbench-heading">
+        <div><h1>AI 对战</h1><p>把同一份提示词发给两个模型，再把它们生成的代码贴回来。</p></div>
+        <button type="button" id="copy-prompt" class="button">复制提示词</button>
       </div>
+      <details class="prompt-guide">
+        <summary>查看统一提示词与接口</summary>
+        <p id="suite-meta" class="form-note"></p>
+        <textarea id="challenge-prompt" class="code-input prompt-input" readonly spellcheck="false" aria-label="统一参赛提示词"></textarea>
+      </details>
+      <span id="copy-status" role="status"></span>
 
-      <section class="panel challenge-brief" aria-labelledby="brief-title">
-        <div class="section-header"><h2 id="brief-title">统一参赛提示词</h2><button type="button" id="copy-prompt" class="button primary">复制提示词</button></div>
-        <div class="brief-body">
-          <div class="suite-tags" id="suite-tags"></div>
-          <p class="challenge-operator-note">比较模型时，保持对话上下文、工具权限和重试次数一致。校验结果会单独显示。</p>
-          <details><summary>查看完整提示词与代码接口</summary><textarea id="challenge-prompt" class="code-input prompt-input" readonly spellcheck="false" aria-label="统一参赛提示词"></textarea></details>
-          <span id="copy-status" role="status"></span>
-        </div>
-      </section>
-
-      <form id="challenge-form" class="challenge-form">
-        <div class="challenge-slots">
-          <section class="panel entry" aria-labelledby="entry-a-title">
-            <div class="section-header"><h2 id="entry-a-title"><b>A</b> 参赛算法</h2><button type="button" class="text-button" id="sample-a">填入示例</button></div>
-            <div class="entry-fields">
-              <label>模型或算法名称<input type="text" id="name-a" placeholder="策略 A" aria-label="策略 A 名称" maxlength="48" autocomplete="off"></label>
-              <label>参赛代码<textarea id="code-a" class="code-input" placeholder="function decide(state, team) { … }" aria-label="策略 A 代码" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></label>
-              <p id="check-a" class="entry-status" role="status">等待代码</p>
+      <form id="challenge-form" class="challenge-form" data-active-slot="a">
+        <div class="challenge-grid">
+          <div class="entry-area">
+            <div class="slot-switch" role="group" aria-label="切换参赛算法">
+              <button type="button" id="slot-a" aria-pressed="true" aria-controls="entry-a"><strong>算法 A</strong><span id="slot-status-a">待粘贴</span></button>
+              <button type="button" id="slot-b" aria-pressed="false" aria-controls="entry-b"><strong>算法 B</strong><span id="slot-status-b">待粘贴</span></button>
             </div>
-          </section>
-          <section class="panel entry entry-b" aria-labelledby="entry-b-title">
-            <div class="section-header"><h2 id="entry-b-title"><b>B</b> 参赛算法</h2><button type="button" class="text-button" id="sample-b">填入示例</button></div>
-            <div class="entry-fields">
-              <label>模型或算法名称<input type="text" id="name-b" placeholder="策略 B" aria-label="策略 B 名称" maxlength="48" autocomplete="off"></label>
-              <label>参赛代码<textarea id="code-b" class="code-input" placeholder="function decide(state, team) { … }" aria-label="策略 B 代码" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></label>
-              <p id="check-b" class="entry-status" role="status">等待代码</p>
+            <div class="challenge-slots">
+              <section id="entry-a" class="panel entry" aria-labelledby="entry-a-title">
+                <div class="section-header"><h2 id="entry-a-title"><b>A</b> 参赛算法</h2><div class="entry-tools"><button type="button" class="text-button" id="sample-a">示例</button><button type="button" class="button paste-button" id="paste-a">粘贴代码</button></div></div>
+                <div class="entry-fields">
+                  <label>模型或算法名称（可选）<input type="text" id="name-a" placeholder="策略 A" aria-label="策略 A 名称" maxlength="48" autocomplete="off"></label>
+                  <label>参赛代码<textarea id="code-a" class="code-input" placeholder="粘贴 AI 返回的 JavaScript" aria-label="策略 A 代码" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></label>
+                  <p id="check-a" class="entry-status" role="status">等待代码</p>
+                </div>
+              </section>
+              <section id="entry-b" class="panel entry entry-b" aria-labelledby="entry-b-title">
+                <div class="section-header"><h2 id="entry-b-title"><b>B</b> 参赛算法</h2><div class="entry-tools"><button type="button" class="text-button" id="sample-b">示例</button><button type="button" class="button paste-button" id="paste-b">粘贴代码</button></div></div>
+                <div class="entry-fields">
+                  <label>模型或算法名称（可选）<input type="text" id="name-b" placeholder="策略 B" aria-label="策略 B 名称" maxlength="48" autocomplete="off"></label>
+                  <label>参赛代码<textarea id="code-b" class="code-input" placeholder="粘贴 AI 返回的 JavaScript" aria-label="策略 B 代码" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></label>
+                  <p id="check-b" class="entry-status" role="status">等待代码</p>
+                </div>
+              </section>
             </div>
-          </section>
-        </div>
-        <section class="panel match-settings" aria-labelledby="settings-title">
-          <div class="section-header"><h2 id="settings-title">对战配置</h2></div>
-          <div class="settings-body">
-            <fieldset class="mode-picker">
-              <legend class="sr-only">对战模式</legend>
-              <label><input type="radio" name="mode" value="single" checked><span>单局对战</span></label>
-              <label><input type="radio" name="mode" value="benchmark"><span>标准测评</span></label>
-            </fieldset>
-            <div id="single-settings" class="single-settings">
-              <label>战场地图<select id="single-map"></select></label>
-              <div class="seed-field"><label for="single-seed">地图种子</label><div class="seed-row"><input type="text" id="single-seed" value="2407" maxlength="24" autocomplete="off"><button type="button" id="roll-seed" class="button icon-button" aria-label="生成随机种子">⟳</button></div></div>
-              <label>阵营<select id="single-sides"><option value="original">A 蓝方 · B 红方</option><option value="swapped">B 蓝方 · A 红方</option></select></label>
-            </div>
-            <p id="benchmark-settings" class="form-note" hidden>固定地图与种子，双方交换起点，共 18 局。</p>
           </div>
-        </section>
+          <section class="panel match-settings" aria-labelledby="settings-title">
+            <div class="section-header"><h2 id="settings-title">对战配置</h2></div>
+            <div class="settings-body">
+              <fieldset class="mode-picker">
+                <legend class="sr-only">对战模式</legend>
+                <label><input type="radio" name="mode" value="single" checked><span>单局对战</span></label>
+                <label><input type="radio" name="mode" value="benchmark"><span>标准测评</span></label>
+              </fieldset>
+              <div id="single-settings" class="single-settings">
+                <label>战场地图<select id="single-map"></select></label>
+                <div class="seed-field"><label for="single-seed">地图种子</label><div class="seed-row"><input type="text" id="single-seed" value="2407" maxlength="24" autocomplete="off"><button type="button" id="roll-seed" class="button icon-button" aria-label="生成随机种子">⟳</button></div></div>
+                <label>阵营<select id="single-sides"><option value="original">A 蓝方 · B 红方</option><option value="swapped">B 蓝方 · A 红方</option></select></label>
+              </div>
+              <p id="benchmark-settings" class="form-note" hidden>固定地图与种子，双方交换起点，共 18 局。</p>
+            </div>
+          </section>
+        </div>
+
         <div class="challenge-actions">
-          <span id="challenge-feedback" role="status"></span>
-          <button class="button" type="button" id="cancel-challenge" hidden>停止测评</button>
-          <button class="button" type="button" id="stop-match" hidden>中止本局</button>
-          <button class="button" type="submit" id="validate-challenge">校验代码</button>
-          <button class="button primary" type="submit" id="run-challenge">开始单局</button>
+          <div class="dock-status">
+            <div id="draft-status" class="form-note">草稿保存在此浏览器</div>
+            <div id="challenge-feedback" role="status"></div>
+            <div class="live-match" id="live-match" hidden>
+              <strong id="live-round"></strong><span id="live-summary"></span>
+            </div>
+          </div>
+          <div class="dock-buttons">
+            <button class="button" type="button" id="jump-results" hidden>查看结果</button>
+            <button class="button" type="button" id="cancel-challenge" hidden>停止测评</button>
+            <button class="button" type="button" id="stop-match" hidden>中止本局</button>
+            <button class="button" type="submit" id="validate-challenge">校验代码</button>
+            <button class="button primary" type="submit" id="run-challenge">开始单局</button>
+          </div>
         </div>
       </form>
 
-      <section class="panel live-match" id="live-match" aria-labelledby="live-title" hidden>
-        <div class="section-header"><h2 id="live-title">正在对战</h2><span id="live-round"></span></div>
-        <p id="live-summary"></p>
-      </section>
-
       <section class="panel challenge-results" aria-labelledby="challenge-results-title">
         <div class="section-header">
-          <h2 id="challenge-results-title">对战结果</h2>
+          <h2 id="challenge-results-title" tabindex="-1">对战结果</h2>
           <button id="export-challenge" type="button" class="button" hidden>导出报告</button>
         </div>
         <div id="challenge-output"><p class="empty">提交代码并开赛后，可以在这里查看结果和回放。</p></div>

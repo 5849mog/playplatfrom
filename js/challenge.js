@@ -141,13 +141,18 @@ export const DEFENSIVE_SAMPLE = `function decide(state, team) {
 export function normalizeSource(raw) {
   let source = raw.trim();
   const fence = String.fromCharCode(96).repeat(3);
-  if (source.startsWith(fence)) {
+  // Keep a direct submission intact, including any Markdown embedded in string literals.
+  if (!/^function\s+decide\b/.test(source) && source.includes(fence)) {
     const lines = source.split(/\r?\n/);
-    const language = lines[0].slice(3).trim().toLowerCase();
-    if (!['','js','javascript'].includes(language) || lines.at(-1).trim() !== fence) {
-      throw new Error('请粘贴原始 JavaScript，或保留一层完整的 JavaScript 代码围栏');
+    const fences = lines.flatMap((line,index) => line.trimStart().startsWith(fence) ? [index] : []);
+    if (fences.length) {
+      const [start,end] = fences;
+      const language = lines[start].trim().slice(fence.length).trim().toLowerCase();
+      if (fences.length !== 2 || !['','js','javascript'].includes(language) || lines[end].trim() !== fence) {
+        throw new Error('请粘贴原始 JavaScript，或只保留一个完整的 JavaScript 代码块');
+      }
+      source = lines.slice(start + 1,end).join('\n').trim();
     }
-    source = lines.slice(1,-1).join('\n').trim();
   }
   if (!source) throw new Error('请粘贴参赛代码');
   if (source.length > SOURCE_LIMIT) throw new Error('代码超过 ' + SOURCE_LIMIT + ' 个 UTF-16 单位');
